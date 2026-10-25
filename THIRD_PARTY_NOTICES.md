@@ -1,5 +1,7 @@
 # Third-party notices
 
+The GitHub Invertocat SVG is the official brand asset from https://brand.github.com/foundations/logo, used for the repository link without altering its paths.
+
 ## shadcn/ui et Base UI
 
 Les fichiers `apps/web/src/components/ui/` ont été installés depuis le registre shadcn `base-luma`, avec `shadcn@4.22.1`. Les imports `@base-ui/react/*` confirment le dialecte Base UI. Aucun composant Radix n’est utilisé.

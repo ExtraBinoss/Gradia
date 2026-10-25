@@ -1,6 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 const fr = {
+  githubLink: "Gradia sur GitHub (nouvel onglet)",
   distribution: "Distribution",
   minifiedJs: "JS minifié",
   sourceCode: "Sources",
@@ -179,6 +180,7 @@ const fr = {
   yours: "Mes presets",
 };
 const en: typeof fr = {
+  githubLink: "Gradia on GitHub (new tab)",
   distribution: "Distribution",
   minifiedJs: "Minified JS",
   sourceCode: "Source",

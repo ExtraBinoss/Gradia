@@ -850,6 +850,31 @@ body,
   font-weight: 500;
   margin: 0;
 }
+.studio-github {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--surface-radius);
+  color: var(--foreground);
+  transition: background 160ms ease;
+}
+.studio-github:hover {
+  background: var(--muted);
+}
+.studio-github:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.github-brand-icon {
+  width: 17px;
+  height: 17px;
+  display: block;
+  background: currentColor;
+  mask: url("/brand/github.svg") center / contain no-repeat;
+}
 .toolbar-divider {
   display: block;
   width: 1px;

@@ -139,6 +139,16 @@ export function App() {
             </a>
             <span className="toolbar-divider" />
             <h1>{t("studio")}</h1>
+            <a
+              className="studio-github"
+              href="https://github.com/ExtraBinoss/Gradia"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={t("githubLink")}
+              title="GitHub · Gradia"
+            >
+              <span className="github-brand-icon" aria-hidden="true" />
+            </a>
             <span className="toolbar-divider" />
             <Presets />
           </header>
