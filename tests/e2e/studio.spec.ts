@@ -9,6 +9,7 @@ async function choose(page: import("@playwright/test").Page, label: string, valu
 }
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
+  await expect(page.getByTestId("studio-intro")).toHaveCount(0);
 });
 test("fullscreen studio, independent shader styles, effects, and history preserve the canvas", async ({
   page,

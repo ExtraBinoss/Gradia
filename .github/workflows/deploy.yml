@@ -33,6 +33,13 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: bun run test:e2e --project chromium
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: browser-failures-${{ github.sha }}
+          path: test-results/
+          retention-days: 3
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gradia-site-${{ github.sha }}
           path: dist/

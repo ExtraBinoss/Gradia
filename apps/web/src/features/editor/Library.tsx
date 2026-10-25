@@ -52,15 +52,25 @@ export function Variations() {
         }),
       );
       setBusy(true);
+      // Choices are usable immediately. Keep the previous captures while their
+      // replacements render, so refreshes reveal through ShaderPreview's blend.
+      setItems((previous) =>
+        candidates.map((candidate, index) => ({
+          ...candidate,
+          image: previous[index]?.image ?? "",
+        })),
+      );
       if (applyFirst) apply(candidates[0]);
       try {
-        const previews = await Promise.all(
-          candidates.map(async (candidate) => ({
-            ...candidate,
-            image: await thumbnail(candidate.config),
-          })),
+        await Promise.all(
+          candidates.map(async (candidate) => {
+            const image = await thumbnail(candidate.config);
+            if (live.current && revision === generation.current)
+              setItems((previous) =>
+                previous.map((item) => (item.id === candidate.id ? { ...item, image } : item)),
+              );
+          }),
         );
-        if (live.current && revision === generation.current) setItems(previews);
       } catch {
         store.set(notificationAtom, "webglError");
       } finally {
