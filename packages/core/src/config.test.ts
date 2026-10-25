@@ -109,9 +109,9 @@ describe("configuration boundary", () => {
       "[]",
       "null",
       "not json",
-      '{"version":2,"config":{}}',
+      '{"version":3,"config":{}}',
       '{"version":1}',
-      "x".repeat(16385),
+      "x".repeat(65537),
     ])
       expect(() => deserializeConfig(raw)).toThrow();
   });

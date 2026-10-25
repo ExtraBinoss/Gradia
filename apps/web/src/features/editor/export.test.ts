@@ -34,4 +34,8 @@ it("the copied agent prompt includes the exact user preset and integration instr
   expect(prompt).toContain("docs/agents.md");
   expect(prompt).toContain("Do not recreate the renderer per frame");
   expect(agentPrompt(config, "source")).toContain("Copy gradient/core");
+  const local = agentPrompt(config, "minified", "http://localhost:8410");
+  expect(local).toContain("http://localhost:8410/gradia-kit.zip");
+  expect(local).toContain("http://localhost:8410/docs/agents.md");
+  expect(local).toContain("this exact app instance");
 });

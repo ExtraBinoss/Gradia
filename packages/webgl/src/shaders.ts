@@ -112,58 +112,21 @@ attribute vec2 a_position;
 varying vec2 v_uv;
 void main(){v_uv=a_position*0.5+0.5;gl_Position=vec4(a_position,0.0,1.0);}`;
 
+/** Finishing pass after the entire effect stack. Retains composited alpha. */
 export const postFragment = `
 precision highp float;
 varying vec2 v_uv;
-uniform sampler2D u_scene, u_atlas;
+uniform sampler2D u_scene;
 uniform vec2 u_resolution;
 uniform float u_dpr, u_time, u_grain, u_grainScale, u_vignette, u_chromaticShift;
-uniform int u_effect, u_pattern;
-uniform float u_asciiSize, u_glyphCount, u_asciiColored, u_asciiInvert;
-uniform vec3 u_asciiColor, u_background;
-uniform float u_ditherSize, u_levels, u_strength, u_monochrome;
 float hash(vec2 p){vec3 q=fract(vec3(p.x,p.y,p.x+p.y)*vec3(0.1031,0.11369,0.13787));q+=dot(q,q.yzx+19.19);return fract((q.x+q.y)*q.z);}
-float bayer2(vec2 p){p=mod(floor(p),2.0);return 2.0*p.x+3.0*p.y-4.0*p.x*p.y;}
-float bayer4(vec2 p){return (4.0*bayer2(p)+bayer2(floor(p/2.0))+0.5)/16.0;}
-float bayer8(vec2 p){return (16.0*bayer2(p)+4.0*bayer2(floor(p/2.0))+bayer2(floor(p/4.0))+0.5)/64.0;}
-vec3 sceneColor(vec2 uv){
-  vec3 c=texture2D(u_scene,uv).rgb;
-  if(u_chromaticShift>0.0){vec2 shift=(uv-0.5)*u_chromaticShift;c.r=texture2D(u_scene,uv+shift).r;c.b=texture2D(u_scene,uv-shift).b;}
-  return c;
-}
 void main(){
-  vec2 px=v_uv*u_resolution;
-  vec3 c=sceneColor(v_uv);
-  if(u_effect==1){
-    vec2 size=vec2(u_asciiSize*0.65,u_asciiSize)*u_dpr;
-    vec2 cell=floor(px/size);
-    vec2 center=(cell+0.5)*size/u_resolution;
-    vec3 sampleColor=sceneColor(center);
-    float lum=dot(sampleColor,vec3(0.2126,0.7152,0.0722));
-    lum=mix(lum,1.0-lum,u_asciiInvert);
-    float glyph=floor(clamp(lum,0.0,0.9999)*u_glyphCount);
-    vec2 local=fract(px/size);
-    // Atlas has a single row, with a two-pixel gutter in each 32px cell.
-    vec2 atlasUv=vec2((glyph+mix(0.0625,0.9375,local.x))/u_glyphCount, mix(0.0625,0.9375,local.y));
-    float mask=texture2D(u_atlas,atlasUv).r;
-    vec3 ink=mix(u_asciiColor,min(sampleColor*1.55+0.12,1.0),u_asciiColored);
-    c=mix(u_background,ink,mask);
-  }else if(u_effect==2){
-    vec2 p=floor(px/(u_ditherSize*u_dpr));
-    vec2 sampleUv=(p+0.5)*u_ditherSize*u_dpr/u_resolution;
-    c=sceneColor(sampleUv);
-    if(u_monochrome>0.5)c=vec3(dot(c,vec3(0.2126,0.7152,0.0722)));
-    float threshold=bayer4(p);
-    if(u_pattern==1)threshold=bayer8(p);
-    if(u_pattern==2)threshold=hash(p);
-    float levels=u_levels-1.0;
-    c=clamp(floor(c*levels+0.5+(threshold-0.5)*u_strength)/levels,0.0,1.0);
-    if(u_monochrome>0.5)c=mix(u_background,u_asciiColor,c.r);
-  }
-  vec2 grainPx=floor(px/(u_grainScale*u_dpr));
+  vec4 sampleColor=texture2D(u_scene,v_uv);
+  vec3 c=sampleColor.rgb;
+  if(u_chromaticShift>0.0){vec2 shift=(v_uv-0.5)*u_chromaticShift;c.r=texture2D(u_scene,v_uv+shift).r;c.b=texture2D(u_scene,v_uv-shift).b;}
+  vec2 grainPx=floor(v_uv*u_resolution/(u_grainScale*u_dpr));
   float n=mix(hash(grainPx),hash(grainPx+vec2(37.0,91.0)),0.5-0.5*cos(u_time*2.0));
   c+=(n-0.5)*u_grain*0.5;
-  float vig=smoothstep(0.2,0.8,distance(v_uv,vec2(0.5)));
-  c*=1.0-vig*u_vignette;
-  gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);
+  c*=1.0-smoothstep(0.2,0.8,distance(v_uv,vec2(0.5)))*u_vignette;
+  gl_FragColor=vec4(clamp(c,0.0,1.0),sampleColor.a);
 }`;

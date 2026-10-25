@@ -1,0 +1,76 @@
+{
+  "measuredAt": "2026-10-25T12:32:10.911Z",
+  "environment": "Playwright Chromium, 256×160 offscreen WebGL; timings measure CPU dispatch and do not guarantee hardware FPS",
+  "softwareGPU": true,
+  "adapter": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+  "updates": 120,
+  "cpuMs": 20.299999982118607,
+  "synchronousDrawCalls": 0,
+  "synchronousReadbacks": 0,
+  "drawCallsAfterOneFrame": 5,
+  "before": {
+    "hash": -2119432023,
+    "distinct": 60
+  },
+  "after": {
+    "hash": -597927919,
+    "distinct": 60
+  },
+  "steady": {
+    "created": {
+      "program": 3,
+      "texture": 4,
+      "framebuffer": 3,
+      "buffer": 4,
+      "shader": 6
+    },
+    "uploads": 4,
+    "warmCreated": {
+      "program": 3,
+      "texture": 4,
+      "framebuffer": 3,
+      "buffer": 4,
+      "shader": 6
+    },
+    "warmUploads": 4
+  },
+  "independentAscii": {
+    "hash": 1155440832,
+    "distinct": 234
+  },
+  "unchangedAtlas": {
+    "uploads": 0,
+    "allocations": 0
+  },
+  "afterCharacterEdits": {
+    "program": 3,
+    "texture": 6,
+    "framebuffer": 3,
+    "buffer": 4,
+    "shader": 0
+  },
+  "transitionPixels": -8396072,
+  "activeAtEnd": {
+    "program": 4,
+    "texture": 9,
+    "framebuffer": 6,
+    "buffer": 5,
+    "shader": 0
+  },
+  "peak": {
+    "program": 4,
+    "texture": 11,
+    "framebuffer": 6,
+    "buffer": 5,
+    "shader": 2
+  },
+  "remaining": {
+    "program": 0,
+    "texture": 0,
+    "framebuffer": 0,
+    "buffer": 0,
+    "shader": 0
+  },
+  "error": 0,
+  "drawsAfterDestroy": 0
+}

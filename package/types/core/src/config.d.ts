@@ -1,3 +1,4 @@
+import { type PostEffect } from "./effects";
 export type ShaderStyle = "mesh" | "silk" | "aurora" | "liquid" | "radial" | "waves";
 export type Effect = "gradient" | "ascii" | "dither";
 export type DitherPattern = "bayer4" | "bayer8" | "noise";
@@ -36,6 +37,9 @@ export interface GradientConfig {
     grain: number;
     grainScale: number;
     vignette: number;
+    /** Ordered post-processing. The gradient remains the implicit source. */
+    effects: PostEffect[];
+    /** @deprecated Prefer effects. Accepted for v1 and update() compatibility. */
     effect: Effect;
     asciiSize: number;
     asciiCharacters: string;
@@ -86,6 +90,8 @@ export declare const DEFAULT_CONFIG: GradientConfig;
 export declare function isHex(value: unknown): value is string;
 /** Strict at storage/import boundaries. No DOM, UI, time or random globals. */
 export declare function parseConfig(input: unknown): GradientConfig;
+/** Backward-compatible update boundary. New callers update effects explicitly. */
+export declare function mergeConfig(config: GradientConfig, patch: Partial<GradientConfig>): GradientConfig;
 export declare function hexToRgb(hex: string): [number, number, number];
 export declare function serializeConfig(config: GradientConfig): string;
 export declare function deserializeConfig(json: string): GradientConfig;

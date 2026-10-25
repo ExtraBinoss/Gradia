@@ -15,6 +15,23 @@ Gradia is a portable WebGL gradient engine plus a separate visual editor. Live a
 
 The Code dialog can copy a task prompt containing the exact current configuration. Its React/JS/JSON tabs share the editor's validated config.
 
+## Portable effect stack
+
+Use the kit and documentation from the same app instance that produced the preset.
+A local development kit may be newer than the production kit. The Code dialog's agent
+prompt links to the actual instance, including its complete versioned configuration.
+
+`config.effects` is the canonical ordered array of independent post effects. The gradient
+is the implicit source. Use `createEffect("blocks", "unique-id")`, edit its typed params,
+and pass the full config to the same renderer/React adapter. ASCII, Dither, Blocks, Glass
+and Folds run on the GPU, including blend modes, alpha compositing and opacity. Repeated
+instances are supported. JSON v2 preserves the entire stack; v1 imports migrate.
+
+`EffectPass` processes arbitrary same-context textures with two reusable scratch targets.
+`TextureCompositePass` exposes 26 blend modes and 13 Porter–Duff operators independently.
+Read [integration.md](integration.md) for ownership, alpha and sizing contracts. Do not
+replace any of these with CSS filters, DOM overlays, per-frame canvas2D or CPU pixel loops.
+
 ## Public API
 
 `GradientRenderer(canvas, options)`: `update`, `transitionTo`, `setPlaying`, `setQuality`, `seek`, `time`, `render`, `snapshot`, `destroy`.

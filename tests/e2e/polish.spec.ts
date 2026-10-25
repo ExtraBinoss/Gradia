@@ -63,7 +63,7 @@ test("system theme paints the HTML and body before JavaScript runs", async ({ br
   }
 });
 
-test("properties use shared tabs, no status dots, fitting duration controls, and matching pill radii", async ({
+test("properties use a separate effect stack, shared theme tabs, fitting duration controls, and matching pill radii", async ({
   page,
 }) => {
   await page.goto("/");
@@ -96,10 +96,17 @@ test("properties use shared tabs, no status dots, fitting duration controls, and
   );
   expect(centered.every((offset) => offset < 1)).toBe(true);
   await expect(page.locator(".dock-actions > :last-child")).not.toHaveClass("toolbar-divider");
-  const properties = await page.locator('.effect-tabs [data-slot="tabs-list"]').evaluate((el) => ({
-    radius: getComputedStyle(el).borderRadius,
-    background: getComputedStyle(el).backgroundColor,
-  }));
+  await expect(page.locator(".effect-tabs")).toHaveCount(0);
+  await expect(page.getByTestId("effect-stack")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Sélectionner Gradient", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Ajouter un effet", exact: true }).click();
+  for (const name of ["ASCII", "Dither", "Blocks", "Glass", "Pliures"])
+    await expect(
+      page.locator(".effects-add-popover").getByRole("button", { name, exact: true }),
+    ).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "Presets", exact: true }).click();
   const library = await page
     .locator('.preset-library-tabs > [data-slot="tabs-list"]')
@@ -107,7 +114,15 @@ test("properties use shared tabs, no status dots, fitting duration controls, and
       radius: getComputedStyle(el).borderRadius,
       background: getComputedStyle(el).backgroundColor,
     }));
-  expect(properties).toEqual(library);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Paramètres généraux", exact: true }).click();
+  const theme = await page
+    .locator('.global-settings-dialog [data-slot="tabs-list"]')
+    .evaluate((el) => ({
+      radius: getComputedStyle(el).borderRadius,
+      background: getComputedStyle(el).backgroundColor,
+    }));
+  expect(theme).toEqual(library);
 });
 
 test("color edits render while the picker is open and remain a single cancelable preview", async ({

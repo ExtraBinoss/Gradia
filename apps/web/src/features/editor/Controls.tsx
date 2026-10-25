@@ -20,15 +20,7 @@ import { useId, useState, useRef, useEffect, useMemo, memo } from "react";
 import { useAtomValue, useStore, atom } from "jotai";
 import { useTranslation } from "react-i18next";
 import { HexColorPicker, HexColorInput } from "react-colorful";
-import {
-  Plus,
-  RotateCcw,
-  Trash2,
-  ChevronDown,
-  Palette,
-  Waves,
-  SlidersHorizontal,
-} from "lucide-react";
+import { Plus, RotateCcw, Trash2, ChevronDown, Waves, SlidersHorizontal } from "lucide-react";
 import {
   DEFAULT_CONFIG,
   ranges,
@@ -39,106 +31,28 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { animate, useReducedMotion } from "motion/react";
 import {
   configAtom,
   commitAtom,
   previewAtom,
-  hoverAtom,
   historyAtom,
   parameterAtoms,
-  effectAtom,
   shaderStyleAtom,
   colorOrderAtom,
   colorCountAtom,
   activeColorCountAtom,
-  booleanAtoms,
-  toneAtoms,
-  effectSettingsAtom,
 } from "./state";
 import type { ReactNode } from "react";
+import { Choice, IconButton, useEdit } from "./control-primitives";
+import { EffectStack, SelectedEffectControls } from "./EffectStack";
+import { selectedEffectIdAtom, selectedEffectTypeAtom } from "./effect-state";
+export { Choice, IconButton, useEdit } from "./control-primitives";
 
-export function IconButton({
-  label,
-  children,
-  ...props
-}: { label: string; children: ReactNode } & Omit<React.ComponentProps<typeof Button>, "children">) {
-  return (
-    <Tooltip>
-      <TooltipTrigger
-        render={<Button variant="ghost" size="icon-sm" aria-label={label} {...props} />}
-      >
-        {children}
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
-    </Tooltip>
-  );
-}
-export function Choice({
-  label,
-  value,
-  onChange,
-  items,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  items: { value: string; label: string }[];
-}) {
-  return (
-    <Select
-      value={value}
-      onValueChange={(v) => {
-        if (v !== null) onChange(v);
-      }}
-    >
-      <SelectTrigger aria-label={label} className="choice">
-        <SelectValue>{items.find((i) => i.value === value)?.label}</SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        {items.map((i) => (
-          <SelectItem value={i.value} key={i.value}>
-            {i.label}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-export function useEdit() {
-  const store = useStore();
-  return {
-    preview: (patch: Partial<GradientConfig>) => {
-      store.set(hoverAtom, null);
-      store.set(previewAtom, {
-        ...(store.get(previewAtom) ?? store.get(historyAtom).present),
-        ...patch,
-      });
-    },
-    commit: (patch: Partial<GradientConfig>) =>
-      store.set(commitAtom, {
-        ...(store.get(previewAtom) ?? store.get(historyAtom).present),
-        ...patch,
-      }),
-    finish: () => {
-      const p = store.get(previewAtom);
-      if (p) store.set(commitAtom, p);
-    },
-    cancel: () => store.set(previewAtom, null),
-  };
-}
 export const NumberControl = memo(function NumberControl({
   name,
   step = 0.1,
@@ -260,52 +174,6 @@ export const NumberControl = memo(function NumberControl({
     </div>
   );
 });
-function BooleanControl({ name }: { name: "asciiColored" | "asciiInvert" | "ditherMonochrome" }) {
-  const value = useAtomValue(booleanAtoms[name]);
-  const edit = useEdit();
-  const { t } = useTranslation();
-  const id = useId();
-  return (
-    <div className="switch-row">
-      <label htmlFor={id}>{t(name)}</label>
-      <Switch
-        id={id}
-        size="sm"
-        checked={value}
-        onCheckedChange={(value) => edit.commit({ [name]: value })}
-      />
-    </div>
-  );
-}
-function SimpleColor({ name }: { name: "asciiColor" | "backgroundColor" }) {
-  const color = useAtomValue(toneAtoms[name]);
-  const edit = useEdit();
-  const { t } = useTranslation();
-  return (
-    <div className="switch-row">
-      <span>{t(name)}</span>
-      <Popover
-        onOpenChange={(open, details) => {
-          if (!open) {
-            if (details.reason === "escape-key") edit.cancel();
-            else edit.finish();
-          }
-        }}
-      >
-        <PopoverTrigger className="mini-color" aria-label={t(name)} style={{ background: color }} />
-        <PopoverContent className="color-popover">
-          <HexColorPicker color={color} onChange={(color) => edit.preview({ [name]: color })} />
-          <HexColorInput
-            aria-label={t(name)}
-            color={color}
-            onChange={(color) => edit.preview({ [name]: `#${color.replace("#", "")}` })}
-            prefixed
-          />
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-}
 function SortableColor({ id, children }: { id: string; children: ReactNode }) {
   const { t } = useTranslation();
   const {
@@ -499,81 +367,14 @@ function Colors() {
     </section>
   );
 }
-function EffectControls() {
+function GradientControls() {
   const { t } = useTranslation();
-  const c = useAtomValue(effectSettingsAtom);
-  const edit = useEdit();
-  const [characters, setCharacters] = useState<string | null>(null);
-  if (c.effect === "gradient") return null;
-  return (
-    <section className="control-section effect-settings">
-      <h3>{t(c.effect)}</h3>
-      {c.effect === "ascii" ? (
-        <>
-          <NumberControl name="asciiSize" step={1} />
-          <label className="text-label">
-            {t("asciiCharacters")}
-            <input
-              className="text-input mono"
-              value={characters ?? c.asciiCharacters}
-              maxLength={32}
-              onChange={(e) => setCharacters(e.target.value)}
-              onBlur={() => {
-                if (characters && characters.length >= 2 && /^[\x20-\x7e]+$/.test(characters))
-                  edit.commit({ asciiCharacters: characters });
-                setCharacters(null);
-              }}
-            />
-          </label>
-          <BooleanControl name="asciiColored" />
-          <BooleanControl name="asciiInvert" />
-        </>
-      ) : (
-        <>
-          <div className="select-row">
-            <span>{t("ditherPattern")}</span>
-            <Choice
-              label={t("ditherPattern")}
-              value={c.ditherPattern}
-              onChange={(value) =>
-                edit.commit({ ditherPattern: value as GradientConfig["ditherPattern"] })
-              }
-              items={[
-                { value: "bayer4", label: "Bayer 4×4" },
-                { value: "bayer8", label: "Bayer 8×8" },
-                { value: "noise", label: t("noise") },
-              ]}
-            />
-          </div>
-          <NumberControl name="ditherSize" step={1} />
-          <NumberControl name="ditherLevels" step={1} />
-          <NumberControl name="ditherStrength" step={0.01} />
-          <BooleanControl name="ditherMonochrome" />
-        </>
-      )}
-      {(c.effect === "ascii" || c.ditherMonochrome) && (
-        <>
-          <SimpleColor name="asciiColor" />
-          <SimpleColor name="backgroundColor" />
-        </>
-      )}
-    </section>
-  );
-}
-export function Settings() {
-  const scroll = useScrollShadows();
-  const { t } = useTranslation();
-  const effect = useAtomValue(effectAtom),
-    style = useAtomValue(shaderStyleAtom);
+  const style = useAtomValue(shaderStyleAtom);
   const store = useStore();
   const apply = (patch: Partial<GradientConfig>) =>
     store.set(commitAtom, { ...store.get(configAtom), ...patch });
   return (
-    <aside className="settings-panel">
-      <div className="panel-heading">
-        <SlidersHorizontal size={16} />
-        <h2>{t("settings")}</h2>
-      </div>
+    <>
       <div className="style-select">
         <label>{t("shaderStyle")}</label>
         <Choice
@@ -586,84 +387,85 @@ export function Settings() {
           }))}
         />
       </div>
-      <Tabs
-        value={effect}
-        onValueChange={(value) => apply({ effect: value as GradientConfig["effect"] })}
-        className="effect-tabs"
-      >
-        <TabsList aria-label={t("appearance")}>
-          <TabsTrigger value="gradient">
-            <Palette />
-            {t("gradient")}
-          </TabsTrigger>
-          <TabsTrigger value="ascii">
-            <span className="ascii-icon" aria-hidden="true">
-              Aa
-            </span>
-            {t("ascii")}
-          </TabsTrigger>
-          <TabsTrigger value="dither">
-            <span className="dither-icon" aria-hidden="true" />
-            {t("dither")}
-          </TabsTrigger>
-        </TabsList>
-      </Tabs>
-      <ScrollArea
-        className="settings-scroll-root"
-        viewportClassName="settings-scroll"
-        viewportRef={scroll}
-      >
-        <EffectControls />
-        <Colors />
-        <section className="control-section">
-          <div className="section-heading">
-            <h3>
-              <Waves size={15} />
-              {t("motion")}
-            </h3>
-          </div>
-          <NumberControl name="speed" step={1} />
-          <NumberControl name="waveAmplitude" />
-          <NumberControl name="flow" />
-          <Collapsible>
-            <CollapsibleTrigger className="advanced-trigger">
-              {t("advanced")}
-              <ChevronDown size={13} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="advanced-content">
-              <NumberControl name="waveFrequencyX" />
-              <NumberControl name="waveFrequencyY" />
-              <NumberControl name="horizontalPressure" />
-              <NumberControl name="verticalPressure" />
-              <NumberControl name="centerX" step={0.01} />
-              <NumberControl name="centerY" step={0.01} />
-              <NumberControl name="stretch" step={0.01} />
-              <NumberControl name="twist" step={0.01} />
-              <NumberControl name="scale" />
-              <NumberControl name="rotation" step={1} />
-              <NumberControl name="seed" step={1} />
-            </CollapsibleContent>
-          </Collapsible>
-        </section>
-        <section className="control-section">
-          <h3>{t("texture")}</h3>
-          <NumberControl name="grain" step={0.01} />
-          <NumberControl name="vignette" step={0.01} />
-          <Collapsible>
-            <CollapsibleTrigger className="advanced-trigger">
-              {t("advanced")}
-              <ChevronDown size={13} />
-            </CollapsibleTrigger>
-            <CollapsibleContent className="advanced-content">
-              <NumberControl name="chromaticShift" step={0.001} />
-              <NumberControl name="grainScale" />
-              <NumberControl name="shadows" />
-              <NumberControl name="highlights" />
-            </CollapsibleContent>
-          </Collapsible>
-        </section>
-      </ScrollArea>
-    </aside>
+      <Colors />
+      <section className="control-section">
+        <div className="section-heading">
+          <h3>
+            <Waves size={15} />
+            {t("motion")}
+          </h3>
+        </div>
+        <NumberControl name="speed" step={1} />
+        <NumberControl name="waveAmplitude" />
+        <NumberControl name="flow" />
+        <Collapsible>
+          <CollapsibleTrigger className="advanced-trigger">
+            {t("advanced")}
+            <ChevronDown size={13} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="advanced-content">
+            <NumberControl name="waveFrequencyX" />
+            <NumberControl name="waveFrequencyY" />
+            <NumberControl name="horizontalPressure" />
+            <NumberControl name="verticalPressure" />
+            <NumberControl name="centerX" step={0.01} />
+            <NumberControl name="centerY" step={0.01} />
+            <NumberControl name="stretch" step={0.01} />
+            <NumberControl name="twist" step={0.01} />
+            <NumberControl name="scale" />
+            <NumberControl name="rotation" step={1} />
+            <NumberControl name="seed" step={1} />
+          </CollapsibleContent>
+        </Collapsible>
+      </section>
+      <section className="control-section">
+        <h3>{t("texture")}</h3>
+        <NumberControl name="grain" step={0.01} />
+        <NumberControl name="vignette" step={0.01} />
+        <Collapsible>
+          <CollapsibleTrigger className="advanced-trigger">
+            {t("advanced")}
+            <ChevronDown size={13} />
+          </CollapsibleTrigger>
+          <CollapsibleContent className="advanced-content">
+            <NumberControl name="chromaticShift" step={0.001} />
+            <NumberControl name="grainScale" />
+            <NumberControl name="shadows" />
+            <NumberControl name="highlights" />
+          </CollapsibleContent>
+        </Collapsible>
+      </section>
+    </>
+  );
+}
+export function Settings() {
+  const { t } = useTranslation();
+  const selected = useAtomValue(selectedEffectIdAtom);
+  const type = useAtomValue(selectedEffectTypeAtom);
+  const scroll = useScrollShadows();
+  useEffect(() => {
+    scroll.current?.scrollTo({ top: 0 });
+  }, [selected, scroll]);
+  return (
+    <div className="settings-layout">
+      <aside className="settings-panel glass properties-panel" aria-label={t("fxProperties")}>
+        <div className="panel-heading">
+          <SlidersHorizontal size={16} />
+          <h2>{t("fxProperties")}</h2>
+          <span className="properties-context">
+            {t(type === "gradient" ? "gradient" : `fx_${type}`)}
+          </span>
+        </div>
+        <ScrollArea
+          className="settings-scroll-root"
+          viewportClassName="settings-scroll"
+          viewportRef={scroll}
+        >
+          {type === "gradient" ? <GradientControls /> : <SelectedEffectControls key={selected} />}
+        </ScrollArea>
+      </aside>
+      <EffectStack />
+    </div>
   );
 }
 // Exported from the actual shadcn Base UI registry, kept separate from engine code.

@@ -7,6 +7,19 @@ async function choose(page: import("@playwright/test").Page, label: string, valu
   await page.getByRole("combobox", { name: label, exact: true }).click();
   await page.getByRole("option", { name: value, exact: true }).click();
 }
+async function addEffect(
+  page: import("@playwright/test").Page,
+  name: string,
+  language: "fr" | "en" = "fr",
+) {
+  await page
+    .getByRole("button", {
+      name: language === "fr" ? "Ajouter un effet" : "Add effect",
+      exact: true,
+    })
+    .click();
+  await page.locator(".effects-add-popover").getByRole("button", { name, exact: true }).click();
+}
 test.beforeEach(async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("studio-intro")).toHaveCount(0);
@@ -21,9 +34,9 @@ test("fullscreen studio, independent shader styles, effects, and history preserv
   await canvas.evaluate((c) => c.setAttribute("data-instance", "same"));
   for (const name of ["Silk", "Aurora", "Liquid", "Radial", "Waves", "Mesh"])
     await choose(page, "Style du shader", name);
-  await page.getByRole("tab", { name: "ASCII", exact: true }).click();
+  await addEffect(page, "ASCII");
   await expect(page.getByRole("switch", { name: "Couleurs du gradient" })).toBeVisible();
-  await page.getByRole("tab", { name: "Dither", exact: true }).click();
+  await addEffect(page, "Dither");
   await expect(page.getByRole("switch", { name: "Duotone" })).toBeVisible();
   await expect(canvas).toHaveAttribute("data-instance", "same");
   await expect(page.getByRole("button", { name: "Annuler", exact: true })).toBeEnabled();
@@ -46,7 +59,7 @@ test("color preview cancels on Escape and drag reorder commits stable color IDs"
   await expect(handle).toHaveAttribute("aria-pressed", "true");
   await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())));
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByRole("status")).toContainText("color-1");
+  await expect(page.locator(".properties-panel").getByRole("status")).toContainText("color-1");
   await page.keyboard.press("Space");
   await expect(handle).not.toHaveAttribute("aria-pressed", "true");
   await expect
@@ -124,20 +137,22 @@ test("portable React kit and versioned configuration export/import", async ({ pa
   await page.getByRole("button", { name: "Télécharger la configuration", exact: true }).click();
   const download = await pending;
   const json = JSON.parse(await readFile((await download.path())!, "utf8"));
-  expect(json.version).toBe(1);
+  expect(json.version).toBe(2);
   expect(json.config.loopDuration).toBe(8);
   json.config.style = "silk";
-  json.config.effect = "ascii";
+  json.config.effects = [{ id: "imported-ascii", type: "ascii" }];
   await page.locator("input[type=file]").setInputFiles({
     name: "gradient.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(json)),
   });
   await openSettings(page);
-  await expect(page.getByRole("tab", { name: "ASCII", exact: true })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
+  await expect(page.locator('[data-effect-type="ascii"]')).toHaveCount(1);
+  await page.getByRole("button", { name: "Sélectionner ASCII", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Sélectionner ASCII", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[data-effect-settings="ascii"]')).toBeVisible();
 });
 test("glass survives production CSS, dark mode, and narrow viewports", async ({ page }) => {
   await expect(page.getByRole("banner")).toHaveCSS("backdrop-filter", "blur(20px) saturate(1.6)");
@@ -155,7 +170,7 @@ test("glass survives production CSS, dark mode, and narrow viewports", async ({ 
         document.documentElement.scrollHeight <= innerHeight,
     ),
   ).toBe(true);
-  await page.getByRole("tab", { name: "ASCII", exact: true }).click();
+  await addEffect(page, "ASCII", "en");
   await expect(page.getByRole("switch", { name: "Gradient colors" })).toBeVisible();
 });
 test("reduced motion and missing WebGL produce usable states", async ({ page }) => {

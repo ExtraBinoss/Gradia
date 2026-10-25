@@ -1,0 +1,58 @@
+{
+  "measuredAt": "2026-10-25T12:40:57.080Z",
+  "scope": "One foreground 1920×1080 canvas capped to 2M pixels, after warmup. Observed frame pacing on this adapter; not a universal FPS guarantee or an isolated GPU timer.",
+  "adapter": "ANGLE (Intel, Vulkan 1.4.354 (Intel(R) Arc(tm) Graphics (MTL) (0x00007D55)), Intel open-source Mesa driver)",
+  "softwareGPU": false,
+  "maxPixels": 2000000,
+  "phases": [
+    {
+      "effects": [],
+      "frames": [
+        {
+          "fps": 60,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 2
+        },
+        {
+          "fps": 60,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 2
+        },
+        {
+          "fps": 60,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 2
+        }
+      ],
+      "medianFps": 60
+    },
+    {
+      "effects": ["blocks", "glass", "dither"],
+      "frames": [
+        {
+          "fps": 59,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 5
+        },
+        {
+          "fps": 60,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 5
+        },
+        {
+          "fps": 58,
+          "width": 1886,
+          "height": 1061,
+          "drawCalls": 5
+        }
+      ],
+      "medianFps": 59
+    }
+  ],
+  "error": 0
+}

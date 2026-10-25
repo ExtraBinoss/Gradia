@@ -1,6 +1,7 @@
-import { DEFAULT_CONFIG, hexToRgb, parseConfig, type GradientConfig } from "@plinka/gradient-core";
+import { hexToRgb, parseConfig, mergeConfig, type GradientConfig } from "@plinka/gradient-core";
 import { TextureBlendPass } from "./TextureBlendPass";
-import { createProgram, mesh, uploadAtlas } from "./gl";
+import { createProgram, mesh } from "./gl";
+import { EffectPass } from "./EffectPass";
 import { gradientVertex, gradientFragment, postVertex, postFragment } from "./shaders";
 
 export interface RendererStats {
@@ -22,7 +23,7 @@ export interface RendererOptions {
   onError?: (error: Error) => void;
 }
 
-/** Browser adapter. Two steady-state draw calls, no React, store, or per-frame readback. */
+/** Browser adapter. Source + finishing pass, one extra draw per active effect; no per-frame readback. */
 export class GradientRenderer {
   readonly canvas: HTMLCanvasElement;
   private readonly gl: WebGLRenderingContext;
@@ -68,10 +69,11 @@ export class GradientRenderer {
     duration: number;
   } | null = null;
   private blendPass: TextureBlendPass | null = null;
+  private effectPass: EffectPass | null = null;
+  private drawCalls = 0;
   private blendTargets: {
     textures: WebGLTexture[];
     framebuffers: WebGLFramebuffer[];
-    atlas: WebGLTexture;
     width: number;
     height: number;
   } | null = null;
@@ -79,10 +81,11 @@ export class GradientRenderer {
   constructor(canvas: HTMLCanvasElement, options: RendererOptions = {}) {
     this.canvas = canvas;
     this.options = options;
-    this.config = parseConfig({ ...DEFAULT_CONFIG, ...options.config });
+    this.config = parseConfig(options.config ?? {});
     this.playing = options.playing ?? true;
     const gl = canvas.getContext("webgl", {
-      alpha: false,
+      alpha: true,
+      premultipliedAlpha: false,
       antialias: false,
       depth: false,
       stencil: false,
@@ -133,7 +136,7 @@ export class GradientRenderer {
       gl.bindBuffer(target, buffer);
       gl.bufferData(target, data, gl.STATIC_DRAW);
     }
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 1; i++) {
       const texture = gl.createTexture();
       if (!texture) throw new Error("WEBGL_RESOURCE_ERROR");
       this.textures.push(texture);
@@ -154,8 +157,6 @@ export class GradientRenderer {
       this.textures[0],
       0,
     );
-    gl.activeTexture(gl.TEXTURE1);
-    uploadAtlas(gl, this.textures[1], this.config.asciiCharacters);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.BLEND);
   }
@@ -226,17 +227,13 @@ export class GradientRenderer {
 
   update(patch: Partial<GradientConfig>): void {
     if (this.disposed) return;
-    const config = parseConfig({ ...this.config, ...patch });
+    const config = mergeConfig(this.config, patch);
     this.transition = null;
     const wasAnimating = this.canAnimate();
-    const atlasChanged = config.asciiCharacters !== this.config.asciiCharacters;
     this.config = config;
+    this.trimEffectAtlases();
     if (this.elapsed > config.loopDuration) this.elapsed %= config.loopDuration;
     if (!this.lost) {
-      if (atlasChanged) {
-        this.gl.activeTexture(this.gl.TEXTURE1);
-        uploadAtlas(this.gl, this.textures[1], config.asciiCharacters);
-      }
       if (wasAnimating !== this.canAnimate()) this.syncLoop();
       this.invalidate();
     }
@@ -251,7 +248,6 @@ export class GradientRenderer {
     if (this.blendTargets) {
       for (const texture of this.blendTargets.textures) gl.deleteTexture(texture);
       for (const fb of this.blendTargets.framebuffers) gl.deleteFramebuffer(fb);
-      gl.deleteTexture(this.blendTargets.atlas);
     }
     this.blendPass ??= new TextureBlendPass(gl);
     const textures: WebGLTexture[] = [],
@@ -275,19 +271,20 @@ export class GradientRenderer {
       if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE)
         throw new Error("FRAMEBUFFER_ERROR");
     }
-    const atlas = gl.createTexture();
-    if (!atlas) throw new Error("WEBGL_RESOURCE_ERROR");
-    this.blendTargets = { textures, framebuffers, atlas, width: w, height: h };
-    if (this.transition?.from) {
-      gl.activeTexture(gl.TEXTURE1);
-      uploadAtlas(gl, atlas, this.transition.from.asciiCharacters);
-    }
+    this.blendTargets = { textures, framebuffers, width: w, height: h };
   }
+  private trimEffectAtlases() {
+    this.effectPass?.trimAtlases([
+      ...this.config.effects,
+      ...(this.transition?.from?.effects ?? []),
+    ]);
+  }
+
   /** Both shader configurations remain live. Interruptions retain the exact displayed GPU blend. */
   transitionTo(patch: Partial<GradientConfig>, duration = 0.65): void {
     if (this.disposed) return;
     if (!Number.isFinite(duration)) throw new Error("INVALID_DURATION");
-    const target = parseConfig({ ...this.config, ...patch });
+    const target = mergeConfig(this.config, patch);
     if (
       this.lost ||
       duration <= 0 ||
@@ -301,8 +298,7 @@ export class GradientRenderer {
       from = this.config,
       fromTime = this.time;
     this.ensureBlendTargets();
-    const gl = this.gl,
-      targets = this.blendTargets!;
+    const targets = this.blendTargets!;
     if (interrupted) {
       this.render(targets.framebuffers[2]);
       [targets.textures[0], targets.textures[2]] = [targets.textures[2], targets.textures[0]];
@@ -317,16 +313,8 @@ export class GradientRenderer {
         this.canvas.width,
         this.canvas.height,
       );
-    } else {
-      gl.activeTexture(gl.TEXTURE1);
-      uploadAtlas(gl, targets.atlas, from.asciiCharacters);
     }
-    const atlasChanged = target.asciiCharacters !== from.asciiCharacters;
     this.config = target;
-    if (atlasChanged) {
-      gl.activeTexture(gl.TEXTURE1);
-      uploadAtlas(gl, this.textures[1], target.asciiCharacters);
-    }
     this.transition = {
       from: interrupted ? null : from,
       fromTime,
@@ -334,6 +322,7 @@ export class GradientRenderer {
       clockAt: performance.now(),
       duration: Math.max(1, duration * 1000),
     };
+    this.trimEffectAtlases();
     this.invalidate();
   }
 
@@ -376,9 +365,10 @@ export class GradientRenderer {
       cancelAnimationFrame(this.frame);
       this.frame = 0;
     }
+    this.drawCalls = 0;
     const state = this.transition;
     if (!state) {
-      this.renderScene(this.config, this.elapsed, target, this.textures[1]);
+      this.renderScene(this.config, this.elapsed, target);
       return;
     }
     const now = performance.now(),
@@ -386,7 +376,8 @@ export class GradientRenderer {
       mix = position * position * (3 - 2 * position);
     if (position >= 1) {
       this.transition = null;
-      this.renderScene(this.config, this.elapsed, target, this.textures[1]);
+      this.trimEffectAtlases();
+      this.renderScene(this.config, this.elapsed, target);
       return;
     }
     this.ensureBlendTargets();
@@ -394,9 +385,9 @@ export class GradientRenderer {
     if (state.from) {
       const fromTime =
         state.fromTime + (this.playing && state.from.speed > 0 ? (now - state.clockAt) / 1000 : 0);
-      this.renderScene(state.from, fromTime, targets.framebuffers[0], targets.atlas);
+      this.renderScene(state.from, fromTime, targets.framebuffers[0]);
     }
-    this.renderScene(this.config, this.elapsed, targets.framebuffers[1], this.textures[1]);
+    this.renderScene(this.config, this.elapsed, targets.framebuffers[1]);
     this.blendPass!.draw(
       targets.textures[0],
       targets.textures[1],
@@ -405,13 +396,9 @@ export class GradientRenderer {
       this.canvas.height,
       target,
     );
+    this.drawCalls++;
   }
-  private renderScene(
-    c: GradientConfig,
-    elapsed: number,
-    target: WebGLFramebuffer | null,
-    atlas: WebGLTexture,
-  ): void {
+  private renderScene(c: GradientConfig, elapsed: number, target: WebGLFramebuffer | null): void {
     this.prepareColors(c);
     const gl = this.gl,
       scene = this.programs[0],
@@ -420,6 +407,11 @@ export class GradientRenderer {
       gl.uniform1f(this.uniform(program, name), value);
     const i = (program: WebGLProgram, name: string, value: number) =>
       gl.uniform1i(this.uniform(program, name), value);
+    gl.disable(gl.BLEND);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.colorMask(true, true, true, true);
     gl.viewport(0, 0, this.canvas.width, this.canvas.height);
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.framebuffer);
     gl.useProgram(scene);
@@ -450,15 +442,26 @@ export class GradientRenderer {
     f(scene, "u_highlights", c.highlights);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.buffers[1]);
     gl.drawElements(gl.TRIANGLES, 48 * 48 * 6, gl.UNSIGNED_SHORT, 0);
+    this.drawCalls++;
+    let input = this.textures[0];
+    if (c.effects.some((effect) => effect.enabled)) {
+      this.effectPass ??= new EffectPass(gl);
+      input = this.effectPass.apply(
+        input,
+        c.effects,
+        this.canvas.width,
+        this.canvas.height,
+        c.speed === 0 ? 0 : ((elapsed % c.loopDuration) / c.loopDuration) * Math.PI * 2,
+        this.dpr,
+      );
+      this.drawCalls += this.effectPass.lastDrawCalls;
+    }
     gl.bindFramebuffer(gl.FRAMEBUFFER, target);
     gl.useProgram(post);
     this.bindBuffer(post, this.buffers[2]);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.textures[0]);
+    gl.bindTexture(gl.TEXTURE_2D, input);
     i(post, "u_scene", 0);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, atlas);
-    i(post, "u_atlas", 1);
     gl.uniform2f(this.uniform(post, "u_resolution"), this.canvas.width, this.canvas.height);
     f(post, "u_dpr", this.dpr);
     f(
@@ -470,19 +473,8 @@ export class GradientRenderer {
     f(post, "u_grainScale", c.grainScale);
     f(post, "u_vignette", c.vignette);
     f(post, "u_chromaticShift", c.chromaticShift);
-    i(post, "u_effect", ["gradient", "ascii", "dither"].indexOf(c.effect));
-    i(post, "u_pattern", ["bayer4", "bayer8", "noise"].indexOf(c.ditherPattern));
-    f(post, "u_asciiSize", c.asciiSize);
-    f(post, "u_glyphCount", c.asciiCharacters.length);
-    f(post, "u_asciiColored", Number(c.asciiColored));
-    f(post, "u_asciiInvert", Number(c.asciiInvert));
-    gl.uniform3fv(this.uniform(post, "u_asciiColor"), hexToRgb(c.asciiColor));
-    gl.uniform3fv(this.uniform(post, "u_background"), hexToRgb(c.backgroundColor));
-    f(post, "u_ditherSize", c.ditherSize);
-    f(post, "u_levels", c.ditherLevels);
-    f(post, "u_strength", c.ditherStrength);
-    f(post, "u_monochrome", Number(c.ditherMonochrome));
     gl.drawArrays(gl.TRIANGLES, 0, 6);
+    this.drawCalls++;
   }
 
   private bindBuffer(program: WebGLProgram, buffer: WebGLBuffer): void {
@@ -530,7 +522,7 @@ export class GradientRenderer {
         fps: 0,
         width: this.canvas.width,
         height: this.canvas.height,
-        drawCalls: this.transition ? (this.transition.from ? 5 : 3) : 2,
+        drawCalls: this.drawCalls,
       });
     }
   }
@@ -550,7 +542,7 @@ export class GradientRenderer {
           fps: Math.round((this.frames * 1000) / (now - this.statsStart)),
           width: this.canvas.width,
           height: this.canvas.height,
-          drawCalls: this.transition ? (this.transition.from ? 5 : 3) : 2,
+          drawCalls: this.drawCalls,
         });
         this.frames = 0;
         this.statsStart = now;
@@ -572,6 +564,7 @@ export class GradientRenderer {
     this.lost = false;
     this.transition = null;
     this.blendPass = null;
+    this.effectPass = null;
     this.blendTargets = null;
     this.programs = [];
     this.buffers = [];
@@ -614,10 +607,10 @@ export class GradientRenderer {
     for (const texture of this.textures) gl.deleteTexture(texture);
     gl.deleteFramebuffer(this.framebuffer);
     this.blendPass?.destroy();
+    this.effectPass?.destroy();
     if (this.blendTargets) {
       for (const texture of this.blendTargets.textures) gl.deleteTexture(texture);
       for (const fb of this.blendTargets.framebuffers) gl.deleteFramebuffer(fb);
-      gl.deleteTexture(this.blendTargets.atlas);
     }
     this.uniforms.clear();
     this.attributes.clear();

@@ -1,7 +1,7 @@
 import { it, expect } from "vitest";
-import { DEFAULT_CONFIG, generateVariations, parseConfig } from "./index";
+import { generateVariations, parseConfig } from "./index";
 it("generates exactly four deterministic independent variations from the current design", () => {
-  const base = parseConfig({ ...DEFAULT_CONFIG, effect: "ascii", loopDuration: 6 });
+  const base = parseConfig({ effect: "ascii", loopDuration: 6 });
   const before = JSON.stringify(base);
   const first = generateVariations(base, 42);
   expect(first).toHaveLength(4);

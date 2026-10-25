@@ -120,7 +120,7 @@ test("portable GPU renderer renders distinct effects, exports pixels, reuses pro
   expect(result.gradient?.opaque).toBe(true);
   expect(result.gradient?.varies).toBe(true);
   expect(new Set([result.gradient?.hash, result.ascii?.hash, result.dither?.hash]).size).toBe(3);
-  expect(result.stablePrograms).toBe(2);
+  expect(result.stablePrograms).toBe(3);
   expect(result.dimensions).toEqual([160, 100]);
   expect(result.pngSize).toBeGreaterThan(500);
   expect(result.idleDraws).toBe(0);
@@ -447,13 +447,13 @@ test("both shaders advance during the GPU blend, including independent ASCII atl
     const url = "/lib/webgl.js",
       core = "/lib/core.js";
     const { GradientRenderer, TextureBlendPass } = await import(url);
-    const { presets } = await import(core);
+    const { presets, mergeConfig } = await import(core);
     const originalNow = performance.now;
     let now = originalNow.call(performance);
     performance.now = () => now;
     const configs = [
-      { ...presets[4].config, grain: 0, effect: "ascii", asciiCharacters: " .#" },
-      { ...presets[1].config, grain: 0, effect: "ascii", asciiCharacters: " +@M" },
+      mergeConfig(presets[4].config, { grain: 0, effect: "ascii", asciiCharacters: " .#" }),
+      mergeConfig(presets[1].config, { grain: 0, effect: "ascii", asciiCharacters: " +@M" }),
     ];
     const renderers: InstanceType<typeof GradientRenderer>[] = [];
     try {

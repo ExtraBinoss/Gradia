@@ -3113,3 +3113,323 @@ html[data-theme-transition="true"]
     height: 27dvh;
   }
 }
+
+/* Independent properties and effect-stack surfaces share the fixed sidebar. */
+.settings-float {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  overflow: visible;
+}
+.settings-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: 12px;
+}
+.settings-panel.properties-panel {
+  min-height: 120px;
+  border-radius: var(--surface-radius);
+  background: var(--glass);
+  border: 1px solid color-mix(in srgb, var(--foreground) 11%, transparent);
+  overflow: hidden;
+}
+.properties-context {
+  margin-left: auto;
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+.properties-panel .style-select {
+  padding-top: 2px;
+}
+.properties-panel .panel-heading {
+  flex-shrink: 0;
+}
+.properties-panel .settings-scroll-root {
+  flex: 1;
+  min-height: 0;
+}
+.effects-panel {
+  flex: 0 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 110px;
+  max-height: min(300px, 34dvh);
+  border-radius: var(--surface-radius);
+  overflow: hidden;
+}
+.effects-panel-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px 7px 16px;
+  flex-shrink: 0;
+}
+.effects-panel-heading > svg {
+  color: var(--muted-foreground);
+}
+.effects-panel-heading h2 {
+  font-size: 12px;
+  font-weight: 500;
+}
+.effects-count {
+  margin-right: auto;
+  font-size: 10px;
+  color: var(--muted-foreground);
+}
+.effects-panel-heading button {
+  width: 27px;
+  height: 27px;
+  border-radius: var(--surface-radius);
+}
+.effects-stack-scroll {
+  flex: 1;
+  min-height: 48px;
+}
+.effects-stack-viewport {
+  padding: 2px 11px 3px 8px;
+}
+.effect-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.effect-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 3px 5px 3px 2px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  position: relative;
+  transition:
+    background 160ms,
+    border-color 160ms;
+}
+.effect-row[data-selected="true"] {
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+  border-color: color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+.effect-row[data-enabled="false"] .effect-select {
+  opacity: 0.5;
+}
+.effect-row[data-dragging="true"] {
+  z-index: 4;
+  background: var(--popover);
+  box-shadow: 0 5px 16px #00000020;
+}
+.effect-row > button:not(.effect-select, .effect-grip) {
+  width: 25px;
+  height: 27px;
+  min-width: 25px;
+  border-radius: 9px;
+  color: var(--muted-foreground);
+}
+.effect-row > button:not(.effect-select, .effect-grip):hover {
+  color: var(--foreground);
+}
+.effect-grip {
+  width: 17px;
+  height: 31px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+  opacity: 0.65;
+  cursor: grab;
+  touch-action: none;
+}
+.effect-grip:active {
+  cursor: grabbing;
+}
+.effect-grip:focus-visible,
+.effect-select:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+.effect-select {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 0;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+}
+.effect-select strong,
+.effects-add-option strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+}
+.effect-select small {
+  display: block;
+  font-size: 9px;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+.effect-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+}
+.effect-icon .dither-icon {
+  width: 13px;
+  height: 13px;
+}
+.effect-base-spacer {
+  width: 17px;
+  flex-shrink: 0;
+}
+.effect-source-lock {
+  margin-inline: 5px 8px;
+  color: var(--muted-foreground);
+  opacity: 0.6;
+}
+.effect-gradient-row {
+  margin-top: 3px;
+}
+.effects-order-hint {
+  margin: 4px 16px 10px;
+  font-size: 9px;
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+}
+.effects-add-popover {
+  width: min(290px, calc(100vw - 24px)) !important;
+  padding: 13px !important;
+  gap: 10px !important;
+}
+.effects-add-popover [data-slot="popover-title"] {
+  font-size: 13px;
+}
+.effects-add-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.effects-add-option {
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start !important;
+  width: 100%;
+  height: auto !important;
+  min-height: 51px;
+  padding: 8px !important;
+  border-radius: 10px !important;
+  gap: 10px !important;
+}
+.effects-add-option > span:nth-child(2) {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+.effects-add-option small {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  margin-top: 3px;
+}
+.effects-add-option > svg:last-child {
+  color: var(--muted-foreground);
+}
+.fx-mixing-section {
+  padding-top: 10px;
+  padding-bottom: 17px;
+}
+.fx-mixing-section .select-row,
+.fx-composition-options .select-row {
+  margin-top: 15px;
+  font-size: 11px;
+}
+.fx-mixing-section .choice {
+  max-width: 164px;
+  min-width: 0;
+  font-size: 11px;
+}
+.fx-composition-options .advanced-trigger {
+  font-size: 10px;
+  margin-top: 15px;
+}
+.fx-composition-options .advanced-content {
+  padding-top: 0;
+}
+.fx-parameters-section .switch-row {
+  margin-bottom: 14px;
+  font-size: 12px;
+}
+.fx-parameters-section .text-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-block: 15px;
+  font-size: 12px;
+}
+.fx-parameters-section .select-row {
+  margin-bottom: 17px;
+  font-size: 12px;
+}
+.fx-parameters-section h3 {
+  margin-bottom: 20px;
+}
+@media (max-width: 700px) {
+  .settings-layout {
+    gap: 8px;
+  }
+  .settings-panel.properties-panel {
+    min-height: 100px;
+  }
+  .effects-panel {
+    min-height: 99px;
+    max-height: min(166px, 20dvh);
+  }
+  .effects-panel-heading {
+    padding-block: 5px 3px;
+  }
+  .effects-order-hint {
+    margin-bottom: 6px;
+  }
+  .effect-row {
+    min-height: 39px;
+  }
+}
+.fx-mixing-section {
+  padding-block: 13px;
+}
+.fx-composition-options > .advanced-trigger {
+  margin-top: 0;
+  font-size: 11px;
+}
+.fx-composition-options .advanced-content > .number-control {
+  margin-top: 18px;
+}
+.fx-parameters-section {
+  padding-top: 20px;
+}
+.effect-row,
+.effect-select,
+.effect-row > button:not(.effect-select, .effect-grip),
+.effect-grip {
+  border-radius: var(--surface-radius);
+}
+.effects-add-option {
+  border-radius: var(--surface-radius) !important;
+}
+.effect-grip:hover {
+  background: color-mix(in srgb, var(--muted) 60%, transparent);
+}

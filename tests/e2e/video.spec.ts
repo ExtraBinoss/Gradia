@@ -14,6 +14,10 @@ test("Mediabunny exports a complete deterministic two-second loop", async ({ pag
   await page.getByRole("textbox", { name: "Durée de la boucle — Réglages", exact: true }).fill("2");
   await page.getByRole("textbox", { name: "Durée de la boucle — Réglages", exact: true }).blur();
   await page.keyboard.press("Escape");
+  for (const name of ["Blocks", "Glass"]) {
+    await page.getByRole("button", { name: "Ajouter un effet", exact: true }).click();
+    await page.locator(".effects-add-popover").getByRole("button", { name, exact: true }).click();
+  }
   await page.getByRole("button", { name: "Exporter la vidéo", exact: true }).click();
   await page.getByRole("combobox", { name: "Résolution", exact: true }).click();
   await page.getByRole("option", { name: "720px", exact: true }).click();

@@ -31,3 +31,7 @@ Mediabunny (MPL-2.0), utilisé via sa distribution npm sans modification de ses 
 Le tri de palette utilise les distributions npm MIT de `@dnd-kit/core`, `@dnd-kit/sortable` et `@dnd-kit/utilities` : https://github.com/clauderic/dnd-kit.
 
 Le comportement du dock de variations et le composant Slider reprennent le code du projet local Glyphka (Plinka), conformément à la demande de son propriétaire.
+
+## Compositing reference
+
+The original GLSL color/alpha compositor follows the mathematical definitions in [W3C Compositing and Blending Level 1](https://www.w3.org/TR/compositing-1/). Standard blend modes are checked against native Canvas 2D output; extended blend modes are implemented locally.

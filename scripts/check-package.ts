@@ -9,7 +9,7 @@ try {
   const file = join(directory, "consumer.tsx");
   await writeFile(
     file,
-    `import { GradientRenderer,parseConfig,type GradientConfig } from '../package/min-js/gradia.min.js';\nimport { Gradient } from '../package/min-js/gradia-react.min.js';\nconst config:GradientConfig=parseConfig({style:'silk'});\nexport const component=<Gradient config={config} style={{height:400}}/>;\nexport const mount=(canvas:HTMLCanvasElement)=>new GradientRenderer(canvas,{config});\n`,
+    `import { GradientRenderer,parseConfig,createEffect,EffectPass,TextureCompositePass,type GradientConfig } from '../package/min-js/gradia.min.js';\nimport { Gradient } from '../package/min-js/gradia-react.min.js';\nconst blocks=createEffect('blocks','tiles');blocks.params.feather=.4;const glass=createEffect('glass','glass');const config:GradientConfig=parseConfig({style:'silk',effects:[blocks,glass]});\nexport const component=<Gradient config={config} style={{height:400}}/>;\nexport const mount=(canvas:HTMLCanvasElement)=>new GradientRenderer(canvas,{config});\nexport const pipelines=(gl:WebGLRenderingContext)=>({effects:new EffectPass(gl),composite:new TextureCompositePass(gl)});\n`,
   );
   execFileSync(
     "bunx",

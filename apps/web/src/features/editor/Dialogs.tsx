@@ -118,8 +118,10 @@ export function CodeDialog({
             <span className="current-tag">{t("current")}</span>
             <strong>{name || t("untitled")}</strong>
             <p>
-              {t(c.style)} · {t(c.effect)} · {c.loopDuration}s ·{" "}
-              {c.colors.filter((color) => color.enabled).length} {t("colors").toLowerCase()}
+              {t(c.style)} ·{" "}
+              {t("effectCount", { count: c.effects.filter((effect) => effect.enabled).length })} ·{" "}
+              {c.loopDuration}s · {c.colors.filter((color) => color.enabled).length}{" "}
+              {t("colors").toLowerCase()}
             </p>
           </div>
         </div>
@@ -197,17 +199,15 @@ export function CodeDialog({
             <Download />
             {t("downloadCode")}
           </Button>
-          <Button variant="outline" onClick={() => copy(agentPrompt(c, distribution), "prompt")}>
+          <Button
+            variant="outline"
+            onClick={() => copy(agentPrompt(c, distribution, location.origin), "prompt")}
+          >
             {copied === "prompt" ? <Check /> : <Copy />}
             {t(copied === "prompt" ? "copied" : "copyAgentPrompt")}
           </Button>
         </div>
-        <a
-          className="integration-docs"
-          href="https://github.com/ExtraBinoss/Gradia/blob/main/docs/agents.md"
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a className="integration-docs" href="/docs/agents.md" target="_blank" rel="noreferrer">
           {t("integrationDocs")}
           <ArrowUpRight size={13} />
         </a>

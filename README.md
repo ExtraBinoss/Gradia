@@ -2,7 +2,7 @@
 
 **Make a gradient. Make it move. Take it anywhere.**
 
-A fullscreen WebGL gradient studio by [Plinka](https://plinka.eu). Explore 32 presets, shape the motion, add GPU ASCII or dithering, then copy your **exact current preset** into React or JavaScript.
+A fullscreen WebGL gradient studio by [Plinka](https://plinka.eu). Explore 32 presets, shape the motion, stack GPU effects, then copy your **exact current preset** into React or JavaScript.
 
 [Open Gradia](https://gradia.plinka.eu) · [Integration guide](docs/integration.md) · [Architecture](docs/architecture.md) · [For AI agents](docs/agents.md)
 
@@ -16,7 +16,8 @@ A fullscreen WebGL gradient studio by [Plinka](https://plinka.eu). Explore 32 pr
 - Explore **Mesh, Silk, Aurora, Liquid, Radial and Waves**.
 - Reorder up to six colors; adjust composition, motion, contrast, hue, grain and chromatic dispersion.
 - Blend between **two live shader renders**, including their colors and GPU effects.
-- Apply **GPU ASCII**, Bayer dithering or stochastic dithering.
+- Stack **GPU ASCII, dithering, Blocks, Glass and Folds** with independent settings.
+- Reorder effects, adjust opacity, and choose 26 blend modes or 13 alpha operations.
 - Scrub a deterministic **1–30 second seamless loop**.
 - Save named presets locally, with real WebGL thumbnails and undo/redo.
 - Export PNG, WebM, MP4 or versioned JSON; choose any aspect ratio.
@@ -73,7 +74,7 @@ gradient.transitionTo(presets[4].config); // smooth GPU blend to Silk
 // Call gradient.destroy() when your component or page is disposed.
 ```
 
-Normal rendering uses two draw calls. ASCII and dither run on the GPU. Animation and the timeline stay outside React's render cycle. Jotai subscriptions isolate individual controls and colors. Live blending uses five draws temporarily; interrupted blends preserve their visible GPU composite.
+The gradient-only pipeline uses two draw calls. Each active effect adds one GPU pass, including its blend and alpha composition. Animation and the timeline stay outside React's render cycle. Jotai subscriptions isolate individual controls and colors. Live transitions render both complete stacks and preserve their visible GPU composite across interruptions.
 
 [Architecture and performance notes →](docs/architecture.md)
 
@@ -103,3 +104,14 @@ Original Gradia engine and shaders: MIT. Third-party components retain their own
 ## Social preview and showcase media
 
 The English 1200×630 Open Graph card is authored in `artwork/social/index.html`, using the real Gradia recording, local product fonts and the original Plinka PK. Run `bun run assets:social` to reproduce it. Metadata is present in the initial HTML. `python3 scripts/prepare-media.py <recording.webm>` prepares the branded video, matching poster and animated README preview; FFmpeg is only needed for this optional media task.
+
+## Stackable GPU effects
+
+The studio has a separate effect stack: **ASCII, Dither, Blocks, Glass and Folds**.
+Select an effect to edit it, drag to reorder, adjust opacity, and choose from 26 blend modes
+and 13 alpha compositing operators. The gradient remains the source. All effects run in
+WebGL and survive presets, JSON, copied React/JS, PNG and deterministic video exports.
+Download the kit from the same app instance that produced your preset.
+
+The standalone `EffectPass` and `TextureCompositePass` also work with your own WebGL
+textures. See [the integration examples](docs/integration.md#compose-an-effect-stack).

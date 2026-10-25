@@ -17,7 +17,7 @@ export interface RendererOptions {
     onStats?: (stats: RendererStats) => void;
     onError?: (error: Error) => void;
 }
-/** Browser adapter. Two steady-state draw calls, no React, store, or per-frame readback. */
+/** Browser adapter. Source + finishing pass, one extra draw per active effect; no per-frame readback. */
 export declare class GradientRenderer {
     readonly canvas: HTMLCanvasElement;
     private readonly gl;
@@ -49,6 +49,8 @@ export declare class GradientRenderer {
     private materials;
     private transition;
     private blendPass;
+    private effectPass;
+    private drawCalls;
     private blendTargets;
     constructor(canvas: HTMLCanvasElement, options?: RendererOptions);
     private initialize;
@@ -57,6 +59,7 @@ export declare class GradientRenderer {
     private resize;
     update(patch: Partial<GradientConfig>): void;
     private ensureBlendTargets;
+    private trimEffectAtlases;
     /** Both shader configurations remain live. Interruptions retain the exact displayed GPU blend. */
     transitionTo(patch: Partial<GradientConfig>, duration?: number): void;
     private invalidate;

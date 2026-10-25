@@ -17,6 +17,7 @@ function preset(
     config: parseConfig({
       ...DEFAULT_CONFIG,
       ...patch,
+      effects: patch.effects,
       colors: colors.map((color, i) => ({ id: `color-${i}`, color, enabled: true, influence: 1 })),
     }),
   };

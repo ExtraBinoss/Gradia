@@ -1,3 +1,4 @@
+import { createEffect, parseEffect, parseEffects, type PostEffect } from "./effects";
 export type ShaderStyle = "mesh" | "silk" | "aurora" | "liquid" | "radial" | "waves";
 export type Effect = "gradient" | "ascii" | "dither";
 export type DitherPattern = "bayer4" | "bayer8" | "noise";
@@ -36,6 +37,9 @@ export interface GradientConfig {
   grain: number;
   grainScale: number;
   vignette: number;
+  /** Ordered post-processing. The gradient remains the implicit source. */
+  effects: PostEffect[];
+  /** @deprecated Prefer effects. Accepted for v1 and update() compatibility. */
   effect: Effect;
   asciiSize: number;
   asciiCharacters: string;
@@ -118,6 +122,7 @@ export const DEFAULT_CONFIG: GradientConfig = {
   grain: 0.08,
   grainScale: 1,
   vignette: 0.12,
+  effects: [],
   effect: "gradient",
   asciiSize: 10,
   asciiCharacters: " .:-=+*#%@",
@@ -215,7 +220,113 @@ export function parseConfig(input: unknown): GradientConfig {
     });
     if (!result.colors.some((c) => c.enabled)) throw new Error("NO_ACTIVE_COLOR");
   }
+  // A canonical stack always wins over legacy aliases, including an empty stack.
+  result.effects =
+    source.effects === undefined
+      ? result.effect === "gradient"
+        ? []
+        : [fromLegacy(result, result.effect)]
+      : parseEffects(source.effects);
+  synchronizeLegacy(result);
   return result;
+}
+
+function fromLegacy(config: GradientConfig, type: "ascii" | "dither"): PostEffect {
+  const effect = createEffect(type, `legacy-${type}`);
+  return parseEffect({
+    ...effect,
+    scaleMode: "pixels",
+    params:
+      type === "ascii"
+        ? {
+            size: config.asciiSize,
+            characters: config.asciiCharacters,
+            colored: config.asciiColored,
+            invert: config.asciiInvert,
+            foreground: config.asciiColor,
+            background: config.backgroundColor,
+            backgroundOpacity: 1,
+          }
+        : {
+            size: config.ditherSize,
+            levels: config.ditherLevels,
+            strength: config.ditherStrength,
+            pattern: config.ditherPattern,
+            monochrome: config.ditherMonochrome,
+            foreground: config.asciiColor,
+            background: config.backgroundColor,
+          },
+  });
+}
+function synchronizeLegacy(config: GradientConfig): void {
+  config.effect = "gradient";
+  for (const effect of config.effects) {
+    if (effect.type === "ascii") {
+      if (effect.enabled) config.effect = "ascii";
+      config.asciiSize = effect.params.size;
+      config.asciiCharacters = effect.params.characters;
+      config.asciiColored = effect.params.colored;
+      config.asciiInvert = effect.params.invert;
+      config.asciiColor = effect.params.foreground;
+      config.backgroundColor = effect.params.background;
+    } else if (effect.type === "dither") {
+      if (effect.enabled) config.effect = "dither";
+      config.ditherSize = effect.params.size;
+      config.ditherLevels = effect.params.levels;
+      config.ditherStrength = effect.params.strength;
+      config.ditherPattern = effect.params.pattern;
+      config.ditherMonochrome = effect.params.monochrome;
+      config.asciiColor = effect.params.foreground;
+      config.backgroundColor = effect.params.background;
+    }
+  }
+}
+const legacyParameters = {
+  ascii: {
+    asciiSize: "size",
+    asciiCharacters: "characters",
+    asciiColored: "colored",
+    asciiInvert: "invert",
+    asciiColor: "foreground",
+    backgroundColor: "background",
+  },
+  dither: {
+    ditherSize: "size",
+    ditherLevels: "levels",
+    ditherStrength: "strength",
+    ditherPattern: "pattern",
+    ditherMonochrome: "monochrome",
+    asciiColor: "foreground",
+    backgroundColor: "background",
+  },
+} as const;
+/** Backward-compatible update boundary. New callers update effects explicitly. */
+export function mergeConfig(
+  config: GradientConfig,
+  patch: Partial<GradientConfig>,
+): GradientConfig {
+  if (patch.effects !== undefined) return parseConfig({ ...config, ...patch });
+  if (patch.effect !== undefined) return parseConfig({ ...config, ...patch, effects: undefined });
+  let effects = config.effects;
+  for (const type of ["ascii", "dither"] as const) {
+    const params: Record<string, unknown> = {};
+    for (const [alias, name] of Object.entries(legacyParameters[type])) {
+      const value = patch[alias as keyof GradientConfig];
+      if (value !== undefined) params[name] = value;
+    }
+    if (!Object.keys(params).length) continue;
+    let index = -1;
+    for (let at = effects.length - 1; at >= 0; at--)
+      if (effects[at].type === type) {
+        index = at;
+        break;
+      }
+    if (index >= 0)
+      effects = effects.map((effect, at) =>
+        at === index ? parseEffect({ ...effect, params: { ...effect.params, ...params } }) : effect,
+      );
+  }
+  return parseConfig({ ...config, ...patch, effects });
 }
 
 export function hexToRgb(hex: string): [number, number, number] {
@@ -228,17 +339,17 @@ export function hexToRgb(hex: string): [number, number, number] {
 }
 
 export function serializeConfig(config: GradientConfig): string {
-  return JSON.stringify({ version: 1, config: parseConfig(config) }, null, 2);
+  return JSON.stringify({ version: 2, config: parseConfig(config) }, null, 2);
 }
 
 export function deserializeConfig(json: string): GradientConfig {
-  if (json.length > 16384) throw new Error("CONFIG_TOO_LARGE");
+  if (json.length > 65536) throw new Error("CONFIG_TOO_LARGE");
   const data: unknown = JSON.parse(json);
   if (
     !data ||
     typeof data !== "object" ||
     !("version" in data) ||
-    data.version !== 1 ||
+    (data.version !== 1 && data.version !== 2) ||
     !("config" in data)
   )
     throw new Error("INVALID_VERSION");
