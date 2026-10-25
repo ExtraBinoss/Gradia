@@ -1,0 +1,14 @@
+{
+  "source": "Gradia-video.webm",
+  "sourceSha256": "274dc48aa57eb103a7d5047199cbc48dd4cf2f8aaf1cd7ca71650edf71f56413",
+  "duration": 8.6,
+  "introHoldSeconds": 0.6,
+  "logoFadeOut": [
+    0.35,
+    0.95
+  ],
+  "outroFadeIn": [
+    8.15,
+    8.6
+  ]
+}

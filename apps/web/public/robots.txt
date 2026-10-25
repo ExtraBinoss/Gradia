@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://gradia.plinka.eu/sitemap.xml

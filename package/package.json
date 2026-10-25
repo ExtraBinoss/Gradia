@@ -1,0 +1,37 @@
+{
+  "name": "@plinka/gradia",
+  "version": "0.1.0",
+  "description": "Portable WebGL gradients, GPU ASCII, dithering and live shader blending.",
+  "homepage": "https://gradia.plinka.eu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ExtraBinoss/Gradia.git"
+  },
+  "files": [
+    "min-js",
+    "types",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "import": "./min-js/gradia.min.js"
+    },
+    "./react": {
+      "types": "./types/react.d.ts",
+      "import": "./min-js/gradia-react.min.js"
+    }
+  },
+  "peerDependencies": {
+    "react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  }
+}

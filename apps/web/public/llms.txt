@@ -1,0 +1,13 @@
+# Gradia
+
+> A portable WebGL gradient engine and visual editor by Plinka.
+
+- Studio: https://gradia.plinka.eu
+- Repository: https://github.com/ExtraBinoss/Gradia
+- Agent guide: https://gradia.plinka.eu/docs/agents.md
+- Integration: https://gradia.plinka.eu/docs/integration.md
+- Architecture: https://gradia.plinka.eu/docs/architecture.md
+- Download kit: https://gradia.plinka.eu/gradia-kit.zip
+- Standalone ESM: https://gradia.plinka.eu/lib/gradia.min.js
+
+Use Code in the studio to copy an exact preset and agent prompt. Do not import the editor UI to reuse the engine. The plain JS engine has no dependencies; the React adapter requires React.

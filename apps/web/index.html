@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fa" />
+    <meta name="color-scheme" content="light dark" />
+    <style>
+      html {
+        color-scheme: light;
+        background: #f7f8fa;
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not(.light),
+        html:not(.light) body {
+          color-scheme: dark;
+          background: #15161b;
+        }
+      }
+      html.dark,
+      html.dark body {
+        color-scheme: dark;
+        background: #15161b;
+      }
+      html.light,
+      html.light body {
+        color-scheme: light;
+        background: #f7f8fa;
+      }
+      body {
+        margin: 0;
+        background: inherit;
+      }
+    </style>
+    <meta
+      name="description"
+      content="Créez des gradients WebGL animés, ASCII et dither. Un studio Plinka avec un moteur léger et réutilisable dans vos projets React."
+    />
+    <title>Gradia — WebGL Gradient Studio by Plinka</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon-light.svg"
+      media="(prefers-color-scheme: light)"
+    />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon-dark.svg"
+      media="(prefers-color-scheme: dark)"
+    />
+    <link id="active-favicon" rel="icon" type="image/svg+xml" href="/favicon-light.svg" />
+    <link rel="canonical" href="https://gradia.plinka.eu/" />
+    <meta property="og:title" content="Gradia — WebGL Gradient Studio" />
+    <meta
+      property="og:description"
+      content="Create animated WebGL gradients, ASCII and dithering. Copy your exact preset into React or JavaScript."
+    />
+    <meta property="og:image" content="https://gradia.plinka.eu/social/gradia.png" />
+    <meta property="og:url" content="https://gradia.plinka.eu/" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Gradia: a mint and green animated-gradient design, with the Plinka PK mark and the words Color. In motion."
+    />
+    <meta property="og:locale" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gradia — WebGL Gradient Studio" />
+    <meta
+      name="twitter:description"
+      content="Create animated WebGL gradients, ASCII and dithering. Copy your exact preset into React or JavaScript."
+    />
+    <meta name="twitter:image" content="https://gradia.plinka.eu/social/gradia.png" />
+    <meta name="twitter:image:alt" content="Gradia gradient preview: Color. In motion." />
+    <script>
+      (() => {
+        let preference = "system";
+        try {
+          preference = localStorage.getItem("gradient-theme") || "system";
+        } catch {}
+        const dark =
+          preference === "dark" ||
+          (preference !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+        const root = document.documentElement;
+        root.classList.toggle("dark", dark);
+        root.classList.toggle("light", !dark);
+        root.style.colorScheme = dark ? "dark" : "light";
+        document.getElementById("active-favicon").href = dark
+          ? "/favicon-dark.svg"
+          : "/favicon-light.svg";
+        document.querySelector('meta[name="theme-color"]').content = dark ? "#15161b" : "#f7f8fa";
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

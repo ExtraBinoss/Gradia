@@ -1,0 +1,36 @@
+{
+  "measuredAt": "2026-10-25T10:32:05.783Z",
+  "environment": "Playwright Chromium; software WebGL; 1280x800; results are local measurements, not hardware FPS guarantees",
+  "baseline": {
+    "updates": 120,
+    "cpuMs": 19.4,
+    "synchronousDrawCalls": 240
+  },
+  "renderer": {
+    "updates": 120,
+    "cpuMs": 1.9000000059604645,
+    "synchronousDrawCalls": 0,
+    "drawCallsAfterOneFrame": 2
+  },
+  "ui": {
+    "samples": 50,
+    "distinctPlayheadPositions": 50,
+    "frameGapMedianMs": 100.10000000000036,
+    "frameGapP95Ms": 150,
+    "longTasks": 56,
+    "longestTaskMs": 339
+  },
+  "colorPicker": {
+    "pointerEvents": 41,
+    "renderedUpdates": 39,
+    "postPassDraws": 40,
+    "inputToDrawMedianMs": 0.7000000178813934,
+    "inputToDrawP95Ms": 5,
+    "measurement": "CPU pointer event to WebGL draw dispatch; excludes GPU completion"
+  },
+  "library": {
+    "modelCount": 32,
+    "initiallyDecodedPreviews": 5,
+    "firstPreviewReadyWallMs": 643
+  }
+}

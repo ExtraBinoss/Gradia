@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "outDir": "./package/types",
+    "rootDir": "./packages"
+  },
+  "include": ["packages/core/src", "packages/webgl/src", "packages/react/src"],
+  "exclude": ["**/*.test.ts"]
+}

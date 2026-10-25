@@ -1,0 +1,13 @@
+{
+  "name": "@plinka/gradient-react",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./src/index.tsx",
+  "dependencies": {
+    "@plinka/gradient-core": "workspace:*",
+    "@plinka/gradient-webgl": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  }
+}

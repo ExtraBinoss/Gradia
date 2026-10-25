@@ -1,0 +1,9 @@
+{
+  "name": "@plinka/gradient-webgl",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./src/index.ts",
+  "dependencies": {
+    "@plinka/gradient-core": "workspace:*"
+  }
+}

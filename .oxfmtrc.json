@@ -1,0 +1,15 @@
+{
+  "printWidth": 100,
+  "ignorePatterns": [
+    "dist/**",
+    "dist-lib/**",
+    "coverage/**",
+    "bun.lock",
+    "node_modules/**",
+    "package/min-js/**",
+    "package/types/**",
+    "apps/web/public/lib/**",
+    "apps/web/public/types/**",
+    "docs/media/**"
+  ]
+}

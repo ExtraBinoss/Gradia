@@ -1,0 +1,1 @@
+{ "ignorePatterns": ["package/**", "apps/web/public/lib/**", "apps/web/public/types/**"] }

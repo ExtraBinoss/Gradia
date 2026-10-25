@@ -1,0 +1,10 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "gradia",
+  "account_id": "ea4303bc13e34c8659069749d9cdca53",
+  "compatibility_date": "2026-10-25",
+  "assets": { "directory": "./dist", "not_found_handling": "single-page-application" },
+  "routes": [{ "pattern": "gradia.plinka.eu", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+}
